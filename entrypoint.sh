@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-if [[ "$PLUGIN_DEBUG" == "true" ]]; then
+if [[ "$DEBUG" == "true" ]]; then
     set -eo xtrace
 else
     set -e
@@ -20,22 +20,22 @@ COMMIT_COMITTER=$(git log -1 --pretty=format:'%cn')
 COMMIT_COMITTER_EMAIL=$(git log -1 --pretty=format:'%ce')
 COMMIT_CREATED=$(git log -1 --format=%cI)
 
-BRANCH=${CI_COMMIT_SOURCE_BRANCH}
+BRANCH=${CI_COMMIT_BRANCH}
 
 EVENT="push"
 SHA=$CI_COMMIT_SHA
-URL=$CI_COMMIT_LINK
+URL="TODO"
 
-if [[ "$CI_BUILD_EVENT" == "pull_request" ]]; then
+if [[ "$CI_PIPELINE_SOURCE" == "merge_request_event" ]]; then
     EVENT="pr"
     SHA=$CI_COMMIT_SHA
-    SOURCE_BRANCH=$CI_COMMIT_SOURCE_BRANCH
-    TARGET_BRANCH=$CI_COMMIT_TARGET_BRANCH
-    PR_NUMBER=$CI_COMMIT_PULL_REQUEST
+    SOURCE_BRANCH=$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
+    TARGET_BRANCH=$CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+    PR_NUMBER=$CI_MERGE_REQUEST_ID
     URL="TODO PR URL"
 fi
 
-if [[ "$CI_BUILD_EVENT" == "tag" ]]; then
+if [[ -n "$CI_COMMIT_TAG" ]]; then
     TAG=$CI_COMMIT_TAG
     EVENT="tag"
 fi
@@ -72,16 +72,16 @@ gimlet artifact add -f artifact.json $VARS
 echo "Attaching common Gimlet variables.."
 gimlet artifact add \
 -f artifact.json \
---var "REPO=$CI_REPO" \
---var "OWNER=$CI_REPO_OWNER" \
+--var "REPO=$CI_PROJECT_PATH" \
+--var "OWNER=$CI_PROJECT_NAMESPACE" \
 --var "BRANCH=$BRANCH" \
 --var "TAG=$TAG" \
 --var "SHA=$CI_COMMIT_SHA" \
 --var "ACTOR=" \
---var "EVENT=$CI_BUILD_EVENT" \
---var "JOB=$CI_BUILD_NUMBER"
+--var "EVENT=$CI_PIPELINE_SOURCE" \
+--var "JOB=$CI_PIPELINE_ID"
 
-if [[ "$PLUGIN_DEBUG" == "true" ]]; then
+if [[ "$DEBUG" == "true" ]]; then
     cat artifact.json
     exit 0
 fi
@@ -95,20 +95,20 @@ fi
 
 echo "Shipped artifact ID is: $ARTIFACT_ID"
 
-if [[ -z "$PLUGIN_TIMEOUT" ]];
+if [[ -z "$TIMEOUT" ]];
 then
-    PLUGIN_TIMEOUT=10m
+    TIMEOUT=10m
 fi
 
-if [[ "$PLUGIN_WAIT" == "true" || "$PLUGIN_DEPLOY" == "true" ]]; then
-    gimlet artifact track --wait --timeout $PLUGIN_TIMEOUT $ARTIFACT_ID
+if [[ "$WAIT" == "true" || "$DEPLOY" == "true" ]]; then
+    gimlet artifact track --wait --timeout $TIMEOUT $ARTIFACT_ID
 else
     gimlet artifact track $ARTIFACT_ID
 fi
 
-if [[ "$PLUGIN_DEPLOY" == "true" ]]; then
+if [[ "$DEPLOY" == "true" ]]; then
     echo "Deploying.."
-    RELEASE_ID=$(gimlet release make --artifact $ARTIFACT_ID --env $PLUGIN_ENV --app $PLUGIN_APP --output json | jq -r '.id')
+    RELEASE_ID=$(gimlet release make --artifact $ARTIFACT_ID --env $ENV --app $APP --output json | jq -r '.id')
     echo "Deployment ID is: $RELEASE_ID"
-    gimlet release track --wait --timeout $PLUGIN_TIMEOUT $RELEASE_ID
+    gimlet release track --wait --timeout $TIMEOUT $RELEASE_ID
 fi

@@ -6,5 +6,3 @@ RUN curl -L https://github.com/gimlet-io/gimlet-cli/releases/download/cli-v0.19.
 
 ADD entrypoint.sh /bin/
 RUN chmod +x /bin/entrypoint.sh
-
-ENTRYPOINT /bin/entrypoint.sh

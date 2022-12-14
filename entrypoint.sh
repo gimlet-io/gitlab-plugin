@@ -41,7 +41,7 @@ if [[ -n "$CI_COMMIT_TAG" ]]; then
 fi
 
 gimlet artifact create \
---repository "$CI_REPO" \
+--repository "$CI_PROJECT_PATH" \
 --sha "$SHA" \
 --created "$COMMIT_CREATED" \
 --branch "$BRANCH" \

@@ -29,4 +29,4 @@ jobs:
         platforms: linux/amd64
         push: true
         tags: |
-          ghcr.io/gimlet-io/woodpecker-plugin:${{ github.sha }}
+          ghcr.io/gimlet-io/gitlab-plugin:${{ github.sha }}

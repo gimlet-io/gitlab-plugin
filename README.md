@@ -1,2 +1,2 @@
-# woodpecker-plugin
-This is the official Gimlet plugin for Woodpecker CI
+# gitlab-plugin
+This is the official Gimlet plugin for Gitlab CI
